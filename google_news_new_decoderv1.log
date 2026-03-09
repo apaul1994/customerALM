@@ -1,0 +1,16 @@
+2026-03-07 23:07:18,228 - app.main - INFO - Starting Customer Analyzer API
+2026-03-07 23:07:18,229 - app.main - INFO - Starting Customer Analyzer API
+2026-03-07 23:07:18,229 - app.main - INFO - Starting Customer Analyzer API
+2026-03-07 23:07:21,498 - app.main - INFO - Starting Customer Analyzer API
+2026-03-07 23:07:37,110 - app.api.v1.endpoints.customer - INFO - Received fetch article request
+2026-03-07 23:07:41,442 - app.api.v1.endpoints.customer - INFO - Fetch article request processed successfully
+2026-03-07 23:07:51,818 - app.api.v1.endpoints.customer - INFO - Received analyze entity request
+2026-03-07 23:07:51,818 - app.services.customer_service - INFO - Starting analysis for entity: Ananga Paul from India
+2026-03-07 23:07:51,819 - app.services.customer_service - INFO - Fetching article from URL: https://news.google.com/rss/articles/CBMie0FVX3lxTE9sUVlJY2lqV0NGMEJkYWdhMm1RUC1STk9LUVhMcGlucDV0b24zd1pWZlU3S0Jod1cxa2U3MWt4SElJLXlCUmJoTUdYaUtEaFZLOHMzcVJRbFp3ZVdlVExMRGk0dG5DamhobUhic09rZFV5T3JrUEZqeTRPVQ?oc=5
+2026-03-07 23:07:55,245 - app.services.customer_service - INFO - Fetched content length: 8021 characters
+2026-03-07 23:07:55,245 - app.services.customer_service - INFO - Calling LLM for analysis
+2026-03-07 23:07:55,246 - app.services.customer_service - INFO - Calling Gemini API for entity: Ananga Paul
+2026-03-07 23:08:04,504 - app.services.customer_service - INFO - Successfully analyzed Ananga Paul. Result: {'matching_score': 0, 'involved_in_criminal_activity': False, 'involved_in_monetary_fraud': False}
+2026-03-07 23:08:04,505 - app.services.customer_service - INFO - LLM Analysis Result - Score: 0, Criminal: False, Fraud: False
+2026-03-07 23:08:04,505 - app.services.customer_service - INFO - Analysis completed for entity: Ananga Paul
+2026-03-07 23:08:04,505 - app.api.v1.endpoints.customer - INFO - Analyze entity request processed successfully
