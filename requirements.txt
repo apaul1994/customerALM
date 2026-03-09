@@ -1,0 +1,11 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+trafilatura==1.4.0
+python-dotenv==1.0.0
+gnews
+feedparser==6.0.10
+google-genai==0.8.0
+legacy-cgi
+googlenewsdecoder
