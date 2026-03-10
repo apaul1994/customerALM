@@ -6,6 +6,7 @@ trafilatura==1.4.0
 python-dotenv==1.0.0
 gnews
 feedparser==6.0.10
-google-genai==0.8.0
+# google-genai==0.8.0
 legacy-cgi
 googlenewsdecoder
+openai
