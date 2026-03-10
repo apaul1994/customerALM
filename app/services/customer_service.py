@@ -6,12 +6,13 @@ import requests
 import trafilatura
 import json
 import re
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
 from googlenewsdecoder import new_decoderv1 as gnewsdecoder
+
+# 1. Replaced Gemini imports with OpenAI
+from openai import OpenAI
 
 logger = get_logger(__name__)
 
@@ -76,52 +77,40 @@ class CustomerService:
 
     def _call_llm(self, entity_name: str, entity_description: str, country: str, article_content: str = "") -> dict:
         """
-        Send entity information and article content to the Gemini LLM for risk analysis.
+        Send entity information and article content to the OpenAI LLM for risk analysis.
         Uses native JSON mode for efficient parsing and highly strict Adverse Media 
         prompts to accurately flag allegations and civil lawsuits.
         """
-        # Note: make sure 'settings' is imported or available in your class context
-        api_key = settings.GEMINI_API_KEY
-        if not api_key:
-            logger.warning("GEMINI_API_KEY not set; using default values")
-            return {
-                "matching_score": 50,
-                "involved_in_criminal_activity": False,
-                "involved_in_monetary_fraud": False,
-            }
+        # 2. Changed settings key to assume OPENAI_API_KEY
+        # api_key = getattr(settings, "OPENAI_API_KEY", None)
+        # api_key = os.getenv("OPENAI_API_KEY")
+        # if not api_key:
+        #     logger.warning("OPENAI_API_KEY not set; using default values")
+        #     return {
+        #         "matching_score": 50,
+        #         "involved_in_criminal_activity": False,
+        #         "involved_in_monetary_fraud": False,
+        #     }
 
         try:
-            genai.configure(api_key=api_key)
-            
-            # 1. Configure the model for analytical tasks
-            generation_config = {
-                "temperature": 0.1,  # Low temperature makes the model analytical and less "creative"
-                "response_mime_type": "application/json", # Forces the API to return pure JSON (no markdown)
-            }
-            
-            # 2. Fully disable safety blocks since we are intentionally analyzing crime/fraud
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-            }
+            # 3. Initialize OpenAI Client
+            # client = OpenAI(api_key=api_key)
+            token = settings.GIT_TOKEN
+            endpoint = "https://models.github.ai/inference"
+            model_name = "openai/gpt-4o"
 
-            # 3. Define a persona to improve accuracy
+            client = OpenAI(
+                base_url=endpoint,
+                api_key=token,
+            )
+            
+            # 4. Define persona as a system instruction
             system_instruction = (
                 "You are an expert KYC/AML compliance analyst. Your job is strict entity resolution "
                 "and risk assessment. You must carefully distinguish the Target Entity from other "
                 "people or companies mentioned in the text."
             )
 
-            model = genai.GenerativeModel(
-                model_name='gemini-2.5-flash',
-                generation_config=generation_config,
-                safety_settings=safety_settings,
-                system_instruction=system_instruction
-            )
-
-            # 4. Use an "Adverse Media" prompt that flags allegations and lawsuits
             prompt = f"""
             Target Entity Information:
             - Name: {entity_name}
@@ -145,12 +134,23 @@ class CustomerService:
             }}
             """
 
-            logger.info(f"Calling Gemini API for entity: {entity_name}")
-            response = model.generate_content(prompt)
+            logger.info(f"Calling OpenAI API for entity: {entity_name}")
             
-            # 5. Parse the guaranteed JSON response
-            # Because we used response_mime_type="application/json", we no longer need regex!
-            result = json.loads(response.text)
+            # 5. Call OpenAI with JSON mode enabled
+            response = client.chat.completions.create(
+                model=model_name,
+                max_tokens=1000,
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,  # Low temperature makes the model analytical
+                response_format={"type": "json_object"} # Forces pure JSON output
+            )
+            
+            # 6. Parse the JSON response from OpenAI's structure
+            result_text = response.choices[0].message.content
+            result = json.loads(result_text)
             
             parsed_result = {
                 "matching_score": int(result.get("matching_score", 50)),
@@ -162,7 +162,7 @@ class CustomerService:
             return parsed_result
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM JSON (this shouldn't happen with JSON mode): {e}")
+            logger.error(f"Failed to parse LLM JSON: {e}")
             return {}
         except Exception as e:
             logger.error(f"LLM call failed for {entity_name}: {str(e)}")
